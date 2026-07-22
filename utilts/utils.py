@@ -2,6 +2,7 @@ import aiohttp
 import random
 import string
 from bs4 import BeautifulSoup as bs
+import asyncio
 
 
 async def getName() -> tuple[str, str]:
@@ -78,3 +79,11 @@ async def getPhone() -> str:
             )
         )
     )
+
+async def save_account_to_file(login: str, password: str, endpoint: str):
+    """Асинхронно записывает данные аккаунта в текстовый файл."""
+    log_line = f"Логин: {login} | Пароль: {password} | Эндпоинт: {endpoint}\n"
+    # Режим 'a' добавляет новые строки в конец файла, не затирая старые
+    async with asyncio.Lock(): # Защита от одновременной записи из разных тасков
+        with open("accounts.txt", "a", encoding="utf-8") as file:
+            file.write(log_line)

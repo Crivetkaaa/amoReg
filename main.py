@@ -1,13 +1,14 @@
 import asyncio
 import aiohttp
 from mail.getMail import generateParallel
-from amoreg.amoreg import regAMOParallel, checkAmoMail
+from amoreg.amoreg import regAMOParallel
+from classes import AMOInfo
+from twitch.twitchReg import regTwitchParallel
 
 async def main():
     mailQueue = asyncio.Queue()
     amoQueue = asyncio.Queue()
 
-    # Сессия для генерации ящиков на почте
     session = aiohttp.ClientSession(
         headers={
             'content-type': 'application/x-www-form-urlencoded',
@@ -16,12 +17,11 @@ async def main():
     )
     
     try:
-        # ИСПРАВЛЕНО: Запускаем бесконечные процессы параллельно через create_task
         asyncio.create_task(generateParallel(session, mailQueue))
         asyncio.create_task(regAMOParallel(mailQueue, amoQueue))
+        asyncio.create_task(regTwitchParallel(amoQueue))
         
-        # Этот чекер блокирует поток и удерживает main() активным, обрабатывая лиды нон-стоп
-        await checkAmoMail(amoQueue)
+        await asyncio.sleep(3600)
         
     finally:
         await session.close()

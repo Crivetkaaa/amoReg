@@ -37,12 +37,11 @@ async def lisenMail(session: aiohttp.ClientSession, emailInfo: EmailInfo, amoQue
                     if "support@amocrm.ru" in sender_address:
                         info = getInfo(email.get('body', ''))
                         if info:
-                            # Упаковываем в итоговый датакласс AMOInfo и пушим во вторую очередь
                             amoInfo = AMOInfo(login=info[0], password=info[1], endpoint=info[2], session=session)
                             await save_account_to_file(login=info[0], password=info[1], endpoint=info[2])
                            
                             await amoQueue.put(amoInfo)
-                            return # Завершаем опрос почты, сохраняя сессию ЖИВОЙ для amoCRM
+                            return 
                 else:    
                     print(f"[{emailInfo.email_address}] Ожидание письма...")
             await asyncio.sleep(10)
@@ -57,7 +56,6 @@ async def lisenMail(session: aiohttp.ClientSession, emailInfo: EmailInfo, amoQue
         }
 
         try:
-            # Отправляем запрос на удаление. Сессия session здесь еще жива
             async with session.post('https://api.tempamail.com/webapp/email/delete', data=del_data) as resp:
                 if resp.status == 200:
                     print(f"[{emailInfo.email_address}] Ящик успешно удален с сервера TempAMail.")
@@ -80,7 +78,6 @@ async def createAccount(session: aiohttp.ClientSession, queue: asyncio.Queue) ->
             print(f"[Почта] Создан ящик {email.email_address}")
     except Exception as e:
         print(f"Ошибка создания ящика: {e}")
-    # ИСПРАВЛЕНО: Убран неверный queue.task_done()
 
 async def generateParallel(session: aiohttp.ClientSession, queue: asyncio.Queue) -> None:
     print("[Конвейер] Бесконечный генератор почты запущен...")

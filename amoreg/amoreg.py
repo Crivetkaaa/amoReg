@@ -14,7 +14,6 @@ def getSession():
 
 async def lisenAmoMail(amoInfo: AMOInfo, amoQueue: asyncio.Queue):
     session = amoInfo.session
-    # ИСПРАВЛЕНО: Формируем правильный полный URL к API amoCRM
     subdomain = amoInfo.endpoint.replace("https://", "").replace("/", "")
     url = f"https://{subdomain}/api/v4/leads"
     
@@ -35,7 +34,6 @@ async def lisenAmoMail(amoInfo: AMOInfo, amoQueue: asyncio.Queue):
                 else:
                     print(f"[{subdomain}] Ошибка API: {response.status}")
                     break
-            # ИСПРАВЛЕНО: Добавлена обязательная пауза между запросами к апи
             await asyncio.sleep(20)
 
     except Exception as e:
@@ -48,7 +46,6 @@ async def checkAmoMail(amoQueue: asyncio.Queue):
     print("[Конвейер] Мониторинг очереди готовых аккаунтов amoCRM запущен...")
     while True:
         amoInfo = await amoQueue.get()
-        # ИСПРАВЛЕНО: Корректный запуск асинхронного таска
         asyncio.create_task(lisenAmoMail(amoInfo, amoQueue))
 
 async def regAMO(mail: EmailInfo, queue: asyncio.Queue, amoQueue: asyncio.Queue):
@@ -76,7 +73,6 @@ async def regAMO(mail: EmailInfo, queue: asyncio.Queue, amoQueue: asyncio.Queue)
             response.raise_for_status()
 
             if response.status == 200:
-                # Передаем сессию, почту и вторую очередь в сборщик писем
                 asyncio.create_task(lisenMail(session, mail, amoQueue))
             else:
                 await session.close()
@@ -84,7 +80,6 @@ async def regAMO(mail: EmailInfo, queue: asyncio.Queue, amoQueue: asyncio.Queue)
         print(f"[{mail.email_address}] Ошибка регистрации: {e}")
         await session.close() 
     finally:
-        # Сигнализируем, что элемент из mailQueue успешно обработан
         queue.task_done()
 
 async def regAMOParallel(queue: asyncio.Queue, amoQueue: asyncio.Queue):
